@@ -39,16 +39,28 @@ def main() -> None:
 
     strategies = [
         {
-            "key": "analytic",
-            "label": "解析式线长布局",
-            "description": "按连接关系把器件拉近、扩散，再做几何合法化；快，适合先看整体。",
+            "key": "analytic-0",
+            "strategy": "analytic",
+            "label": "analytic / 整板铺开",
+            "description": "解析式布局，spread_density=0，按整板扩散；快。",
+            "params": {"spread_density": 0.0},
+            "enabled": True,
+        },
+        {
+            "key": "analytic-05",
+            "strategy": "analytic",
+            "label": "analytic / 紧凑",
+            "description": "解析式布局，spread_density=0.5，器件更集中，可能线长更短。",
+            "params": {"spread_density": 0.5},
             "enabled": True,
         },
         {
             "key": "blocks",
-            "label": "先分区再落位",
-            "description": "先把电路分成功能块并排布，再在块内落位；更贴近人工习惯，但 65 器件约 160s。",
-            "enabled": False,
+            "strategy": "blocks",
+            "label": "blocks / 先分区",
+            "description": "先按功能块 floorplan，再在块内落位；更贴近人工习惯，约 160s。",
+            "params": {},
+            "enabled": True,
         },
     ]
 
@@ -56,12 +68,16 @@ def main() -> None:
     for s in strategies:
         if not s["enabled"]:
             continue
-        rep = place_job({"board": board, "parts": movable, "strategy": s["key"]})
+        rep = place_job({"board": board, "parts": movable,
+                         "strategy": s["strategy"], **s["params"]})
         new = [v for v in rep["violations"] if vkey(v) not in base_keys]
         candidates.append({
             "strategy": s["key"],
             "label": s["label"],
             "description": s["description"],
+            "params": s["params"],
+            "actual_strategy": rep.get("strategy", s["strategy"]),
+            "fallback": rep.get("fallback"),
             "moved": rep["summary"]["parts_moved"],
             "fixed": rep["summary"]["parts_fixed"],
             "failed": rep["summary"]["failed"],

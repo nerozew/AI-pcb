@@ -257,9 +257,11 @@ function renderCandidates() {
     return;
   }
   $('#candidates').innerHTML =
-    '<thead><tr><th>策略</th><th>移动</th><th>固定</th><th>失败</th><th>新增 DRC</th><th>软规则</th><th>HPWL</th><th>耗时</th><th>硬门禁</th></tr></thead><tbody>' +
+    '<thead><tr><th>策略</th><th>实际</th><th>移动</th><th>固定</th><th>失败</th><th>新增 DRC</th><th>软规则</th><th>HPWL</th><th>耗时</th><th>硬门禁</th></tr></thead><tbody>' +
     cands.map(c => `<tr class="${isBest(c) ? 'best' : ''}">
-      <td>${esc(c.strategy)}</td><td>${esc(c.moved)}</td><td>${esc(c.fixed)}</td>
+      <td>${esc(c.strategy)}</td>
+      <td>${esc(c.actual_strategy || c.strategy)}${c.fallback ? ' <span class="tag info" title="分区失败，已回退">fallback</span>' : ''}</td>
+      <td>${esc(c.moved)}</td><td>${esc(c.fixed)}</td>
       <td>${(c.failed || []).length}</td><td>${esc(c.new_drc)}</td>
       <td>${esc(softText(c))}</td><td>${esc(c.hpwl_after)}</td><td>${esc(c.seconds)}s</td>
       <td>${hardOK(c) ? '<span class="tag ok">PASS</span>' : '<span class="tag bad">FAIL</span>'}</td></tr>`).join('') +
