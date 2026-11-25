@@ -21,3 +21,4 @@ third_party/
 # 调研时的第三方克隆与浏览器缓存
 _research/
 .playwright-mcp/
+ui-mvp*.png

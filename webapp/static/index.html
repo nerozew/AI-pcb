@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>AI PCB 自动布局</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2330; --border:#30363d;
+    --text:#e6edf3; --muted:#8b949e; --blue:#58a6ff; --green:#3fb950;
+    --red:#f85149; --amber:#d29922; --radius:10px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;font-size:14px;line-height:1.5}
+  header{display:flex;align-items:center;justify-content:space-between;gap:16px;
+    padding:18px 28px;border-bottom:1px solid var(--border);background:var(--panel)}
+  h1{margin:0;font-size:19px;font-weight:650}
+  .sub{margin:2px 0 0;color:var(--muted);font-size:12px}
+  .pill{border:1px solid var(--border);border-radius:999px;padding:3px 12px;
+    font-size:12px;color:var(--muted);white-space:nowrap}
+  .pill.ok{color:var(--green);border-color:#238636}
+  .pill.warn{color:var(--amber);border-color:#9e6a03}
+  .pill.bad{color:var(--red);border-color:#da3633}
+  main{max-width:1240px;margin:0 auto;padding:22px 28px 60px}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
+    padding:16px 18px;margin-bottom:16px}
+  .card h2{margin:0 0 12px;font-size:13px;font-weight:600;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.04em}
+  .controls{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .controls label{color:var(--muted);font-size:12px}
+  select{background:var(--panel2);color:var(--text);border:1px solid var(--border);
+    border-radius:6px;padding:7px 10px;font-size:13px}
+  button{background:#238636;color:#fff;border:1px solid #2ea043;border-radius:6px;
+    padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer}
+  button:disabled{opacity:.55;cursor:not-allowed}
+  button.ghost{background:transparent;color:var(--text);border-color:var(--border);font-weight:500}
+  .hint{color:var(--muted);font-size:12px;margin-left:auto}
+  .grid{display:grid;grid-template-columns:1.15fr 1fr;gap:16px}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+  .stage{display:flex;gap:12px;padding:8px 0;border-bottom:1px dashed var(--border)}
+  .stage:last-child{border-bottom:0}
+  .stage-label{width:78px;color:var(--blue);font-size:12px;flex:none}
+  .stage-detail{color:var(--muted);font-size:12px;word-break:break-all}
+  .preview{display:flex;align-items:center;justify-content:center;min-height:260px}
+  .preview img{max-width:100%;max-height:420px;border-radius:8px;border:1px solid var(--border)}
+  .empty{color:var(--muted);font-size:13px;text-align:center;padding:40px 10px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+  th{color:var(--muted);font-weight:500;font-size:12px}
+  tr:last-child td{border-bottom:0}
+  tr.best td{background:rgba(63,185,80,.07)}
+  .tag{display:inline-block;border-radius:4px;padding:1px 7px;font-size:11px;font-weight:600}
+  .tag.ok{color:var(--green);background:rgba(63,185,80,.12)}
+  .tag.bad{color:var(--red);background:rgba(248,81,73,.12)}
+  .tag.warn{color:var(--amber);background:rgba(210,153,34,.12)}
+  .tag.info{color:var(--blue);background:rgba(88,166,255,.12)}
+  .muted{color:var(--muted)}
+  pre{background:#0b0f14;border:1px solid var(--border);border-radius:8px;padding:12px;
+    max-height:260px;overflow:auto;font-size:12px;color:#c9d1d9;white-space:pre-wrap}
+  footer{max-width:1240px;margin:0 auto;padding:0 28px 30px;color:var(--muted);font-size:11px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .chip{border:1px solid var(--border);border-radius:999px;padding:3px 10px;color:var(--muted);font-size:12px}
+  .chip b{color:var(--text);font-weight:600}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>AI PCB 自动布局</h1>
+    <p class="sub">MVP · Buck 6 器件 · 规则驱动 · 独立几何 Gate</p>
+  </div>
+  <span id="status" class="pill">就绪</span>
+</header>
+
+<main>
+  <section class="card">
+    <div class="controls">
+      <label>板卡
+        <select id="board">
+          <option>Buck 6 器件（MVP）</option>
+          <option disabled>wisp6 65 器件（M4）</option>
+        </select>
+      </label>
+      <span class="chip">当前板 <b>Buck_Unrouted_Source.PcbDoc</b></span>
+      <span class="chip">策略 <b>blocks + analytic</b></span>
+      <button id="runBtn">运行自动布局</button>
+      <button id="refreshBtn" class="ghost">刷新</button>
+      <button class="ghost" disabled title="M2：worker 在 prepare 步读取 AD 当前选择">读取 AD 框选（M2）</button>
+      <span class="hint">前提：AD26 已打开该板；EDA Agent 轮询脚本在跑</span>
+    </div>
+  </section>
+
+  <section class="grid">
+    <div class="card">
+      <h2>流水线</h2>
+      <div id="stages"><div class="empty">还没有运行。点击“运行自动布局”。</div></div>
+    </div>
+    <div class="card">
+      <h2>候选预览</h2>
+      <div class="preview">
+        <img id="preview" alt="候选布局预览" style="display:none">
+        <div id="previewEmpty" class="empty">运行后显示板框、器件位置和阻挡件。</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>候选</h2>
+    <table id="candidates"><tbody><tr><td class="muted">还没有候选。</td></tr></tbody></table>
+  </section>
+
+  <section class="card">
+    <h2>规则判定（最优候选）</h2>
+    <table id="rules"><tbody><tr><td class="muted">还没有规则结果。</td></tr></tbody></table>
+  </section>
+
+  <section class="card">
+    <h2>运行日志</h2>
+    <pre id="log">（运行后显示 stdout/stderr）</pre>
+  </section>
+</main>
+
+<footer>技术演示，未经工程验收；DRC 仅信息性，不参与硬门禁。</footer>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const state = { loop: {}, chain: {}, log: '' };
+
+function esc(v) {
+  return String(v ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+function refs(b, movable) {
+  const out = new Set();
+  (b.blocked_by || []).forEach(v => {
+    for (const k of ['a', 'b']) {
+      const s = String(v[k] || '');
+      if (s.startsWith('pad:') && s.includes('#')) {
+        const ref = s.slice(4).split('#')[0];
+        if (ref && ref !== movable) out.add(ref);
+      }
+    }
+  });
+  return [...out].join(', ') || '硬约束';
+}
+function isBest(c) {
+  const b = state.loop.best || {};
+  return c.config && b.config && c.config.strategy === b.config.strategy &&
+         c.config.decap_pull === b.config.decap_pull;
+}
+
+function renderStages() {
+  const s = (state.chain.stages) || {};
+  const items = [
+    ['知识', s.knowledge], ['规则提案', s.rule_agent], ['编译', s.compiler],
+    ['候选', s.placement], ['Critic', s.critic]
+  ];
+  if (!items.some(([, v]) => v)) {
+    $('#stages').innerHTML = '<div class="empty">还没有运行。</div>';
+    return;
+  }
+  $('#stages').innerHTML = items.map(([label, v]) => {
+    const detail = v ? Object.entries(v).map(([k, val]) =>
+      `${esc(k)}: ${esc(typeof val === 'object' ? JSON.stringify(val) : val)}`).join(' · ') : '—';
+    return `<div class="stage"><div class="stage-label">${label}</div><div class="stage-detail">${detail}</div></div>`;
+  }).join('');
+}
+
+function renderCandidates() {
+  const c = state.loop.candidates || [];
+  if (!c.length) {
+    $('#candidates').innerHTML = '<tbody><tr><td class="muted">还没有候选。</td></tr></tbody>';
+    return;
+  }
+  $('#candidates').innerHTML =
+    '<thead><tr><th>策略</th><th>decap</th><th>硬门禁</th><th>新增 DRC</th><th>软规则</th><th>HPWL</th><th>耗时</th></tr></thead><tbody>' +
+    c.map(x => `<tr class="${isBest(x) ? 'best' : ''}">
+      <td>${esc(x.config?.strategy)}</td><td>${esc(x.config?.decap_pull)}</td>
+      <td>${x.hard_ok ? '<span class="tag ok">PASS</span>' : '<span class="tag bad">FAIL</span>'}</td>
+      <td>${esc(x.new_drc)}</td><td>${esc(x.soft_pass)}/${esc(x.soft_total)}</td>
+      <td>${esc(x.hpwl_after)}</td><td>${esc(x.seconds)}s</td></tr>`).join('') +
+    '</tbody>';
+}
+
+function renderRules() {
+  const best = state.loop.best || {};
+  const soft = best.soft || [];
+  if (!soft.length) {
+    $('#rules').innerHTML = '<tbody><tr><td class="muted">还没有规则结果。</td></tr></tbody>';
+    return;
+  }
+  const blocked = {};
+  (best.blocked || []).forEach(b => { blocked[b.rule_id] = b; });
+  $('#rules').innerHTML =
+    '<thead><tr><th>规则</th><th>结果</th><th>实际 / 阈值</th><th>说明</th></tr></thead><tbody>' +
+    soft.map(s => {
+      const b = blocked[s.rule_id];
+      const status = b ? 'BLOCKED' : s.status === 'pass' ? 'PASS' : s.status === 'fail' ? 'FAIL' : 'NOT EVALUATED';
+      const cls = b ? 'warn' : s.status === 'pass' ? 'ok' : s.status === 'fail' ? 'bad' : 'info';
+      const detail = b ? `被 ${esc(refs(b, s.targets?.a))} 挡住` : esc(s.reason || '');
+      return `<tr><td>${esc(s.rule_id)}</td><td><span class="tag ${cls}">${status}</span></td>
+        <td>${esc(s.value_mm ?? '-')} / ${esc(s.limit_mm ?? '-')} mm</td><td>${detail}</td></tr>`;
+    }).join('') + '</tbody>';
+}
+
+function render() {
+  const pass = state.chain.pass;
+  const pill = $('#status');
+  pill.textContent = pass === true ? 'PASS' : pass === false ? 'NEEDS WORK' : '就绪';
+  pill.className = 'pill ' + (pass === true ? 'ok' : pass === false ? 'warn' : '');
+  renderStages();
+  renderCandidates();
+  renderRules();
+  $('#log').textContent = state.log || '（运行后显示 stdout/stderr）';
+}
+
+async function load() {
+  const res = await fetch('/api/report', { cache: 'no-store' });
+  const data = await res.json();
+  state.loop = data.loop || {};
+  state.chain = data.chain || {};
+  render();
+  if (data.preview) {
+    $('#preview').src = '/api/preview.svg?t=' + Date.now();
+    $('#preview').style.display = 'block';
+    $('#previewEmpty').style.display = 'none';
+  }
+}
+
+async function runNow() {
+  const btn = $('#runBtn');
+  btn.disabled = true;
+  $('#status').textContent = '运行中…';
+  $('#status').className = 'pill warn';
+  $('#log').textContent = '正在读板、编译规则、布局、校验……';
+  try {
+    const res = await fetch('/api/run', { method: 'POST' });
+    const data = await res.json();
+    state.log = (data.stdout || '') + (data.stderr ? '\n[stderr]\n' + data.stderr : '');
+    await load();
+  } catch (e) {
+    state.log = String(e);
+    $('#status').textContent = '请求失败';
+    $('#status').className = 'pill bad';
+  } finally {
+    btn.disabled = false;
+    render();
+  }
+}
+
+$('#runBtn').addEventListener('click', runNow);
+$('#refreshBtn').addEventListener('click', load);
+load();
+</script>
+</body>
+</html>

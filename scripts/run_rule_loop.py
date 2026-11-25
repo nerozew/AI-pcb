@@ -78,10 +78,11 @@ def evaluate(placed, moved_refs, parts, soft_rules, base_keys) -> dict:
         t = rule["targets"]
         d_mm, _, _ = pad_mm(placed, t["a"], t["b"], t.get("net", ""))
         if d_mm is None:
-            soft.append({"rule_id": rule["rule_id"], "status": "not_evaluated"})
+            soft.append({"rule_id": rule["rule_id"], "targets": t,
+                         "status": "not_evaluated"})
             continue
         limit = rule["params"]["max_distance_mm"]
-        soft.append({"rule_id": rule["rule_id"],
+        soft.append({"rule_id": rule["rule_id"], "targets": t,
                      "status": "pass" if d_mm <= limit else "fail",
                      "value_mm": round(d_mm, 2), "limit_mm": limit})
     return {
