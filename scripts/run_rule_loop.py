@@ -291,9 +291,22 @@ def main() -> None:
 
     best_out = {k: v for k, v in best.items() if k != "placed"}
     best_out["moves"] = moves_from(board, best["placed"])
-    report = {"board": board.name, "rules": str(RULES),
-              "candidates": [{k: v for k, v in r.items() if k != "placed"} for r in results],
-              "best": best_out}
+    fixed = sorted(c.ref for c in board.components if c.ref and c.ref not in parts)
+    report = {
+        "board": board.name,
+        "rules": str(RULES),
+        "baseline": {"status": base["status"], "violations": len(base_keys)},
+        "counts": {
+            "components": len(board.components),
+            "pads": len(board.pads),
+            "nets": len(board.nets()),
+            "movable": len(parts),
+            "anchors": len(fixed),
+        },
+        "anchors": fixed,
+        "candidates": [{k: v for k, v in r.items() if k != "placed"} for r in results],
+        "best": best_out,
+    }
     (OUT / "rule_loop_report.json").write_text(
         json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     print("\nFINAL:", json.dumps(best_out["config"]), "hard_ok=", best_out["hard_ok"],

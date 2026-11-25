@@ -1,0 +1,11 @@
+{
+  "board": "wisp6",
+  "source": "work/runs/wisp6/boards/wisp-6_unrouted.PcbDoc",
+  "anchors": [
+    "J1", "J2", "SBW1", "SMA1",
+    "U1", "U2", "U3", "U4", "U5", "U6", "U7",
+    "Y1", "L1", "L2", "Cp1", "Cp2", "C12", "C13", "R10",
+    "D1", "D4"
+  ],
+  "note": "机械/接口/RF/电源锚点；其余 44 个阻容/LED 可动。此列表需工程师复核。"
+}

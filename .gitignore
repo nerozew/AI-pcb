@@ -22,3 +22,4 @@ third_party/
 _research/
 .playwright-mcp/
 /ui-mvp*.png
+/ui-wisp6.png

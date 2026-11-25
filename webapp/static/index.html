@@ -13,7 +13,7 @@
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--text);
-    font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;font-size:14px;line-height:1.5}
+    font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;font-size:14px;line-height:1.55}
   header{display:flex;align-items:center;justify-content:space-between;gap:16px;
     padding:18px 28px;border-bottom:1px solid var(--border);background:var(--panel)}
   h1{margin:0;font-size:19px;font-weight:650}
@@ -23,7 +23,7 @@
   .pill.ok{color:var(--green);border-color:#238636}
   .pill.warn{color:var(--amber);border-color:#9e6a03}
   .pill.bad{color:var(--red);border-color:#da3633}
-  main{max-width:1240px;margin:0 auto;padding:22px 28px 60px}
+  main{max-width:1280px;margin:0 auto;padding:22px 28px 60px}
   .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
     padding:16px 18px;margin-bottom:16px}
   .card h2{margin:0 0 12px;font-size:13px;font-weight:600;color:var(--muted);
@@ -39,13 +39,21 @@
   .hint{color:var(--muted);font-size:12px;margin-left:auto}
   .grid{display:grid;grid-template-columns:1.15fr 1fr;gap:16px}
   @media(max-width:900px){.grid{grid-template-columns:1fr}}
-  .stage{display:flex;gap:12px;padding:8px 0;border-bottom:1px dashed var(--border)}
-  .stage:last-child{border-bottom:0}
-  .stage-label{width:78px;color:var(--blue);font-size:12px;flex:none}
-  .stage-detail{color:var(--muted);font-size:12px;word-break:break-all}
-  .preview{display:flex;align-items:center;justify-content:center;min-height:260px}
-  .preview img{max-width:100%;max-height:420px;border-radius:8px;border:1px solid var(--border)}
-  .empty{color:var(--muted);font-size:13px;text-align:center;padding:40px 10px}
+  .kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+  @media(max-width:900px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  .kpi{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+  .kpi b{display:block;font-size:19px;font-weight:650}
+  .kpi span{color:var(--muted);font-size:11px}
+  .step{display:flex;gap:12px;padding:12px 0;border-bottom:1px dashed var(--border)}
+  .step:last-child{border-bottom:0}
+  .num{flex:none;width:24px;height:24px;border-radius:50%;background:rgba(88,166,255,.15);
+    color:var(--blue);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .step-body{flex:1;min-width:0}
+  .step-title{font-weight:600;margin-bottom:3px}
+  .step-desc{color:var(--muted);font-size:12px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .chip{border:1px solid var(--border);border-radius:999px;padding:2px 9px;color:var(--muted);font-size:12px}
+  .chip b{color:var(--text);font-weight:600}
   table{width:100%;border-collapse:collapse;font-size:13px}
   th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top}
   th{color:var(--muted);font-weight:500;font-size:12px}
@@ -57,19 +65,21 @@
   .tag.warn{color:var(--amber);background:rgba(210,153,34,.12)}
   .tag.info{color:var(--blue);background:rgba(88,166,255,.12)}
   .muted{color:var(--muted)}
+  .preview{display:flex;align-items:center;justify-content:center;min-height:260px}
+  .preview img{max-width:100%;max-height:460px;border-radius:8px;border:1px solid var(--border)}
+  .empty{color:var(--muted);font-size:13px;text-align:center;padding:30px 10px}
   pre{background:#0b0f14;border:1px solid var(--border);border-radius:8px;padding:12px;
     max-height:260px;overflow:auto;font-size:12px;color:#c9d1d9;white-space:pre-wrap}
-  footer{max-width:1240px;margin:0 auto;padding:0 28px 30px;color:var(--muted);font-size:11px}
-  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  .chip{border:1px solid var(--border);border-radius:999px;padding:3px 10px;color:var(--muted);font-size:12px}
-  .chip b{color:var(--text);font-weight:600}
+  details{margin-top:8px}
+  summary{cursor:pointer;color:var(--blue);font-size:12px}
+  footer{max-width:1280px;margin:0 auto;padding:0 28px 30px;color:var(--muted);font-size:11px}
 </style>
 </head>
 <body>
 <header>
   <div>
     <h1>AI PCB 自动布局</h1>
-    <p class="sub">MVP · Buck 6 器件 · 规则驱动 · 独立几何 Gate</p>
+    <p class="sub" id="subtitle">加载中…</p>
   </div>
   <span id="status" class="pill">就绪</span>
 </header>
@@ -79,41 +89,62 @@
     <div class="controls">
       <label>板卡
         <select id="board">
-          <option>Buck 6 器件（MVP）</option>
-          <option disabled>wisp6 65 器件（M4）</option>
+          <option value="wisp6">wisp6 65 器件</option>
+          <option value="buck">Buck 6 器件</option>
         </select>
       </label>
-      <span class="chip">当前板 <b>Buck_Unrouted_Source.PcbDoc</b></span>
-      <span class="chip">策略 <b>blocks + analytic</b></span>
+      <span class="chip" id="modeChip">模式 <b>-</b></span>
+      <span class="chip" id="strategyChip">策略 <b>-</b></span>
       <button id="runBtn">运行自动布局</button>
       <button id="refreshBtn" class="ghost">刷新</button>
       <button class="ghost" disabled title="M2：worker 在 prepare 步读取 AD 当前选择">读取 AD 框选（M2）</button>
-      <span class="hint">前提：AD26 已打开该板；EDA Agent 轮询脚本在跑</span>
+      <span class="hint">前提：AD26 打开目标板；EDA Agent 轮询脚本在跑</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>初始条件</h2>
+    <div class="kpis" id="kpis"></div>
+    <div class="step" style="margin-top:14px">
+      <div class="num">i</div>
+      <div class="step-body">
+        <div class="step-title">规则 / 策略来源</div>
+        <div class="step-desc" id="rulesSource">-</div>
+        <div class="step-desc" style="margin-top:4px">
+          注意：<b>analytic / blocks 不是规则</b>，是 <code>eda_agent.layout.place.placer</code> 里的两种布局算法；
+          规则来自 <code>configs/*/rules*.json</code> 和知识库，由工程师审批。
+        </div>
+      </div>
     </div>
   </section>
 
   <section class="grid">
     <div class="card">
-      <h2>流水线</h2>
-      <div id="stages"><div class="empty">还没有运行。点击“运行自动布局”。</div></div>
+      <h2>怎么布局（一步一步）</h2>
+      <div id="steps"><div class="empty">还没有运行。</div></div>
     </div>
     <div class="card">
       <h2>候选预览</h2>
       <div class="preview">
         <img id="preview" alt="候选布局预览" style="display:none">
-        <div id="previewEmpty" class="empty">运行后显示板框、器件位置和阻挡件。</div>
+        <div id="previewEmpty" class="empty">运行后显示板框、器件位置和移动/固定。</div>
       </div>
     </div>
   </section>
 
   <section class="card">
-    <h2>候选</h2>
+    <h2>候选与筛选</h2>
     <table id="candidates"><tbody><tr><td class="muted">还没有候选。</td></tr></tbody></table>
   </section>
 
   <section class="card">
-    <h2>规则判定（最优候选）</h2>
-    <table id="rules"><tbody><tr><td class="muted">还没有规则结果。</td></tr></tbody></table>
+    <h2>规则判定 / 硬约束</h2>
+    <table id="rules"><tbody><tr><td class="muted">还没有结果。</td></tr></tbody></table>
+  </section>
+
+  <section class="card">
+    <h2>最优候选的移动清单</h2>
+    <table id="moves"><tbody><tr><td class="muted">还没有移动。</td></tr></tbody></table>
   </section>
 
   <section class="card">
@@ -126,7 +157,7 @@
 
 <script>
 const $ = (s) => document.querySelector(s);
-const state = { loop: {}, chain: {}, log: '' };
+const state = { board: 'wisp6', data: {}, log: '' };
 
 function esc(v) {
   return String(v ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -144,50 +175,104 @@ function refs(b, movable) {
   });
   return [...out].join(', ') || '硬约束';
 }
+function hardOK(c) {
+  if (typeof c.hard_ok === 'boolean') return c.hard_ok;
+  return (c.failed || []).length === 0 && (c.new_drc || 0) === 0;
+}
+function softText(c) {
+  if (c.soft_total == null) return '未配置';
+  return `${c.soft_pass}/${c.soft_total}`;
+}
 function isBest(c) {
-  const b = state.loop.best || {};
-  return c.config && b.config && c.config.strategy === b.config.strategy &&
-         c.config.decap_pull === b.config.decap_pull;
+  const b = state.data.best || {};
+  return c.strategy === b.strategy;
 }
 
-function renderStages() {
-  const s = (state.chain.stages) || {};
+function renderKpis() {
+  const d = state.data;
+  const c = d.counts || {};
+  const base = d.baseline || {};
   const items = [
-    ['知识', s.knowledge], ['规则提案', s.rule_agent], ['编译', s.compiler],
-    ['候选', s.placement], ['Critic', s.critic]
+    ['器件', c.components ?? '-'],
+    ['可动', c.movable ?? '-'],
+    ['锚点', c.anchors ?? '-'],
+    ['基线违规', base.violations ?? '-'],
+    ['模式', d.mode || '-'],
   ];
-  if (!items.some(([, v]) => v)) {
-    $('#stages').innerHTML = '<div class="empty">还没有运行。</div>';
+  $('#kpis').innerHTML = items.map(([label, value]) =>
+    `<div class="kpi"><b>${esc(value)}</b><span>${esc(label)}</span></div>`).join('');
+  $('#rulesSource').textContent = d.rules_source || '-';
+  $('#modeChip').innerHTML = `模式 <b>${esc(d.mode || '-')}</b>`;
+  const enabled = (d.strategies || []).filter(s => s.enabled).map(s => s.key);
+  $('#strategyChip').innerHTML = `策略 <b>${esc(enabled.join(' + ') || '-')}</b>`;
+  $('#subtitle').textContent = `${d.label || ''} · ${d.source || ''}`;
+}
+
+function renderSteps() {
+  const d = state.data;
+  if (d.empty) {
+    $('#steps').innerHTML = '<div class="empty">还没有运行。</div>';
     return;
   }
-  $('#stages').innerHTML = items.map(([label, v]) => {
-    const detail = v ? Object.entries(v).map(([k, val]) =>
-      `${esc(k)}: ${esc(typeof val === 'object' ? JSON.stringify(val) : val)}`).join(' · ') : '—';
-    return `<div class="stage"><div class="stage-label">${label}</div><div class="stage-detail">${detail}</div></div>`;
-  }).join('');
+  const anchors = (d.anchors || []).map(r => `<span class="chip">${esc(r)}</span>`).join('');
+  const movable = (d.movable || []).map(r => `<span class="chip">${esc(r)}</span>`).join('');
+  const strategies = (d.strategies || []).map(s =>
+    `<div class="step-desc" style="margin-top:4px">
+       <b>${esc(s.label)}</b>（${esc(s.key)}）：${esc(s.description)}
+       ${s.enabled ? '<span class="tag ok">已跑</span>' : '<span class="tag info">未跑</span>'}
+     </div>`).join('');
+  const best = d.best || {};
+  const cands = d.candidates || [];
+  $('#steps').innerHTML = `
+    <div class="step"><div class="num">1</div><div class="step-body">
+      <div class="step-title">读板 + 基线</div>
+      <div class="step-desc">${esc(d.counts?.components ?? '-')} 器件 / ${esc(d.counts?.pads ?? '-')} 焊盘 / ${esc(d.counts?.nets ?? '-')} 网络；基线 ${esc(d.baseline?.violations ?? '-')} 条违规。</div>
+    </div></div>
+    <div class="step"><div class="num">2</div><div class="step-body">
+      <div class="step-title">固定锚点</div>
+      <div class="step-desc">锚点不参与移动；其余器件可动。</div>
+      <div class="chips">${anchors || '<span class="muted">无</span>'}</div>
+      <details><summary>展开可动器件（${(d.movable || []).length}）</summary><div class="chips">${movable}</div></details>
+    </div></div>
+    <div class="step"><div class="num">3</div><div class="step-body">
+      <div class="step-title">生成候选</div>
+      <div class="step-desc">用 eda_agent 的布局算法生成坐标，不写 AD。</div>
+      ${strategies}
+    </div></div>
+    <div class="step"><div class="num">4</div><div class="step-body">
+      <div class="step-title">硬筛</div>
+      <div class="step-desc">锚点不动、无新增 DRC、无失败器件；Buck 还检查软规则。候选 ${cands.length} 个。</div>
+    </div></div>
+    <div class="step"><div class="num">5</div><div class="step-body">
+      <div class="step-title">选最优</div>
+      <div class="step-desc">按 失败数 → 新增 DRC → HPWL 排序；当前最优：${esc(best.strategy || '-')}，
+        HPWL ${esc(best.hpwl_after ?? '-')}。</div>
+    </div></div>`;
 }
 
 function renderCandidates() {
-  const c = state.loop.candidates || [];
-  if (!c.length) {
+  const cands = state.data.candidates || [];
+  if (!cands.length) {
     $('#candidates').innerHTML = '<tbody><tr><td class="muted">还没有候选。</td></tr></tbody>';
     return;
   }
   $('#candidates').innerHTML =
-    '<thead><tr><th>策略</th><th>decap</th><th>硬门禁</th><th>新增 DRC</th><th>软规则</th><th>HPWL</th><th>耗时</th></tr></thead><tbody>' +
-    c.map(x => `<tr class="${isBest(x) ? 'best' : ''}">
-      <td>${esc(x.config?.strategy)}</td><td>${esc(x.config?.decap_pull)}</td>
-      <td>${x.hard_ok ? '<span class="tag ok">PASS</span>' : '<span class="tag bad">FAIL</span>'}</td>
-      <td>${esc(x.new_drc)}</td><td>${esc(x.soft_pass)}/${esc(x.soft_total)}</td>
-      <td>${esc(x.hpwl_after)}</td><td>${esc(x.seconds)}s</td></tr>`).join('') +
+    '<thead><tr><th>策略</th><th>移动</th><th>固定</th><th>失败</th><th>新增 DRC</th><th>软规则</th><th>HPWL</th><th>耗时</th><th>硬门禁</th></tr></thead><tbody>' +
+    cands.map(c => `<tr class="${isBest(c) ? 'best' : ''}">
+      <td>${esc(c.strategy)}</td><td>${esc(c.moved)}</td><td>${esc(c.fixed)}</td>
+      <td>${(c.failed || []).length}</td><td>${esc(c.new_drc)}</td>
+      <td>${esc(softText(c))}</td><td>${esc(c.hpwl_after)}</td><td>${esc(c.seconds)}s</td>
+      <td>${hardOK(c) ? '<span class="tag ok">PASS</span>' : '<span class="tag bad">FAIL</span>'}</td></tr>`).join('') +
     '</tbody>';
 }
 
 function renderRules() {
-  const best = state.loop.best || {};
+  const best = state.data.best || {};
   const soft = best.soft || [];
   if (!soft.length) {
-    $('#rules').innerHTML = '<tbody><tr><td class="muted">还没有规则结果。</td></tr></tbody>';
+    $('#rules').innerHTML = `<tbody><tr><td class="muted">
+      ${esc(state.data.rules_source || '当前板未配置软规则')}<br>
+      硬约束：锚点不动、板框内、器件不重叠、无新增 DRC。</td></tr></tbody>`;
     return;
   }
   const blocked = {};
@@ -204,27 +289,58 @@ function renderRules() {
     }).join('') + '</tbody>';
 }
 
+function renderMoves() {
+  const best = state.data.best || {};
+  const moves = best.moves || [];
+  if (!moves.length) {
+    $('#moves').innerHTML = '<tbody><tr><td class="muted">还没有移动。</td></tr></tbody>';
+    return;
+  }
+  const rows = moves.slice(0, 20).map(m =>
+    `<tr><td>${esc(m.designator)}</td><td>${esc(m.x)}</td><td>${esc(m.y)}</td><td>${esc(m.rotation)}°</td></tr>`).join('');
+  $('#moves').innerHTML =
+    `<thead><tr><th>器件</th><th>x (mil)</th><th>y (mil)</th><th>旋转</th></tr></thead><tbody>${rows}</tbody>` +
+    (moves.length > 20 ? `<tfoot><tr><td colspan="4" class="muted">显示前 20 / 共 ${moves.length}</td></tr></tfoot>` : '');
+}
+
 function render() {
-  const pass = state.chain.pass;
+  const d = state.data;
+  const best = d.best || {};
+  const ok = d.empty ? null : hardOK(best);
+  const softOK = best.soft_total == null ? null : best.soft_pass === best.soft_total;
   const pill = $('#status');
-  pill.textContent = pass === true ? 'PASS' : pass === false ? 'NEEDS WORK' : '就绪';
-  pill.className = 'pill ' + (pass === true ? 'ok' : pass === false ? 'warn' : '');
-  renderStages();
+  if (d.empty) {
+    pill.textContent = '未运行';
+    pill.className = 'pill';
+  } else if (!ok) {
+    pill.textContent = 'FAIL';
+    pill.className = 'pill bad';
+  } else if (softOK === false) {
+    pill.textContent = 'HARD PASS / SOFT GAP';
+    pill.className = 'pill warn';
+  } else {
+    pill.textContent = 'PASS';
+    pill.className = 'pill ok';
+  }
+  renderKpis();
+  renderSteps();
   renderCandidates();
   renderRules();
+  renderMoves();
   $('#log').textContent = state.log || '（运行后显示 stdout/stderr）';
 }
 
 async function load() {
-  const res = await fetch('/api/report', { cache: 'no-store' });
-  const data = await res.json();
-  state.loop = data.loop || {};
-  state.chain = data.chain || {};
+  const res = await fetch('/api/report?board=' + encodeURIComponent(state.board), { cache: 'no-store' });
+  state.data = await res.json();
   render();
-  if (data.preview) {
-    $('#preview').src = '/api/preview.svg?t=' + Date.now();
+  if (state.data.preview) {
+    $('#preview').src = '/api/preview.svg?board=' + encodeURIComponent(state.board) + '&t=' + Date.now();
     $('#preview').style.display = 'block';
     $('#previewEmpty').style.display = 'none';
+  } else {
+    $('#preview').style.display = 'none';
+    $('#previewEmpty').style.display = 'block';
   }
 }
 
@@ -233,9 +349,9 @@ async function runNow() {
   btn.disabled = true;
   $('#status').textContent = '运行中…';
   $('#status').className = 'pill warn';
-  $('#log').textContent = '正在读板、编译规则、布局、校验……';
+  $('#log').textContent = '正在跑：读板 → 锚点 → 布局 → 硬筛 → 报告……';
   try {
-    const res = await fetch('/api/run', { method: 'POST' });
+    const res = await fetch('/api/run?board=' + encodeURIComponent(state.board), { method: 'POST' });
     const data = await res.json();
     state.log = (data.stdout || '') + (data.stderr ? '\n[stderr]\n' + data.stderr : '');
     await load();
@@ -249,6 +365,12 @@ async function runNow() {
   }
 }
 
+$('#board').value = state.board;
+$('#board').addEventListener('change', (e) => {
+  state.board = e.target.value;
+  state.log = '';
+  load();
+});
 $('#runBtn').addEventListener('click', runNow);
 $('#refreshBtn').addEventListener('click', load);
 load();
