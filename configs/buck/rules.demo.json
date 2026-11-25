@@ -1,0 +1,107 @@
+{
+  "board": "buck",
+  "note": "DEMO ONLY: 所有距离都是占位值，用于验证规则链路，不是工程规范；真实项目必须由工程师按 datasheet/公司规范填写并签字。",
+  "anchors": ["IC1", "J1", "J2"],
+  "movable": ["C1", "C2", "C3", "L1", "R1", "R2"],
+  "engine": {
+    "strategy": "analytic",
+    "grid_mm": 0.5,
+    "decap_pull": 1.0,
+    "spread_density": 0.0
+  },
+  "hard": [
+    {
+      "rule_id": "R_DEMO_ANCHORS",
+      "kind": "anchor",
+      "params": {"fixed": ["IC1", "J1", "J2"]},
+      "source_ref": {"origin": "demo"},
+      "review_status": "approved_demo"
+    },
+    {
+      "rule_id": "R_DEMO_TOP_ONLY",
+      "kind": "side",
+      "params": {"side": "top"},
+      "source_ref": {"origin": "demo"},
+      "review_status": "approved_demo"
+    },
+    {
+      "rule_id": "R_DEMO_PRESERVE_NETS",
+      "kind": "netlist",
+      "params": {"preserve": true},
+      "source_ref": {"origin": "demo"},
+      "review_status": "approved_demo"
+    },
+    {
+      "rule_id": "R_DEMO_INSIDE_OUTLINE",
+      "kind": "inside_outline",
+      "params": {},
+      "source_ref": {"origin": "demo"},
+      "review_status": "approved_demo"
+    },
+    {
+      "rule_id": "R_DEMO_NO_NEW_DRC",
+      "kind": "drc_baseline",
+      "params": {"compare": "no_new_or_worsened"},
+      "source_ref": {"origin": "demo"},
+      "review_status": "approved_demo"
+    }
+  ],
+  "soft": [
+    {
+      "rule_id": "R_DEMO_CIN_VIN",
+      "kind": "pad_distance",
+      "targets": {"a": "C2", "b": "IC1", "net": "IN"},
+      "params": {"max_distance_mm": 5.0},
+      "source_ref": {
+        "document": "TI-SLVSC95A",
+        "page": 19,
+        "origin": "datasheet",
+        "note": "原厂要求 CIN 靠近 VIN；5mm 是 demo 占位值"
+      },
+      "review_status": "demo_only",
+      "confidence": 0.6
+    },
+    {
+      "rule_id": "R_DEMO_SW_L",
+      "kind": "pad_distance",
+      "targets": {"a": "L1", "b": "IC1", "net": "SW"},
+      "params": {"max_distance_mm": 8.0},
+      "source_ref": {
+        "document": "TI-SLVSC95A",
+        "page": 19,
+        "origin": "datasheet",
+        "note": "SW 到电感；8mm 是 demo 占位值"
+      },
+      "review_status": "demo_only",
+      "confidence": 0.6
+    },
+    {
+      "rule_id": "R_DEMO_FB_VFB",
+      "kind": "pad_distance",
+      "targets": {"a": "R1", "b": "IC1", "net": "FB"},
+      "params": {"max_distance_mm": 5.0},
+      "source_ref": {
+        "document": "TI-SLVSC95A",
+        "page": 19,
+        "origin": "datasheet",
+        "note": "反馈分压靠近 VFB；5mm 是 demo 占位值"
+      },
+      "review_status": "demo_only",
+      "confidence": 0.6
+    },
+    {
+      "rule_id": "R_DEMO_COUT_OUT",
+      "kind": "pad_distance",
+      "targets": {"a": "C3", "b": "L1", "net": "OUT"},
+      "params": {"max_distance_mm": 8.0},
+      "source_ref": {
+        "document": "TI-SLVSC95A",
+        "page": 19,
+        "origin": "datasheet",
+        "note": "输出电容靠近电感输出；8mm 是 demo 占位值"
+      },
+      "review_status": "demo_only",
+      "confidence": 0.6
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "passages": [
+    {
+      "text": "Place the input capacitor close to VIN and PGND to minimize the high-frequency input loop.",
+      "document_id": "TI-SLVSC95A",
+      "page": 19,
+      "source": "datasheet"
+    },
+    {
+      "text": "Keep the switch node (SW) to inductor path short and away from sensitive feedback traces.",
+      "document_id": "TI-SLVSC95A",
+      "page": 19,
+      "source": "datasheet"
+    },
+    {
+      "text": "Connect the feedback divider close to the VFB pin.",
+      "document_id": "TI-SLVSC95A",
+      "page": 19,
+      "source": "datasheet"
+    },
+    {
+      "text": "Place the output capacitor close to the inductor output and the return path.",
+      "document_id": "TI-SLVSC95A",
+      "page": 19,
+      "source": "datasheet"
+    }
+  ]
+}

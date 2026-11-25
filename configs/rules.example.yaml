@@ -1,0 +1,52 @@
+# 规则录入模板（v1）
+# 只有 review_status: approved 的 hard 规则进入求解。
+# 没有 source_ref、或数值为 null 的规则一律 REVIEW_REQUIRED，不得当硬约束。
+# 工具不会自动填写 max_distance_mm 这类数值。
+
+- rule_id: R_BUCK_CIN_VIN
+  kind: max_pad_distance        # max_pad_distance | keepout | region | rotation | anchor
+  severity: hard                # hard | soft
+  scope:
+    board: buck
+    group: input
+  targets:
+    movable: C2
+    movable_pad: "1"
+    anchor: IC1
+    anchor_pad: "VIN"
+  params:
+    max_distance_mm: null       # 必须由工程师按 datasheet / 公司规范填写
+  source_ref:
+    document: TI-SLVSC95A
+    revision: A
+    page: 19
+    origin: datasheet           # datasheet | company_standard | engineer_approved
+  review_status: draft          # draft | approved | rejected
+  approved_by: null
+  version: 1
+
+- rule_id: R_BUCK_ANCHORS
+  kind: anchor
+  severity: hard
+  scope:
+    board: buck
+  targets:
+    fixed: [IC1, J1, J2]
+  source_ref:
+    origin: engineer_approved
+  review_status: draft
+  approved_by: null
+  version: 1
+
+- rule_id: R_BUCK_DRC_COMPARE
+  kind: drc_baseline
+  severity: hard
+  scope:
+    board: buck
+  params:
+    compare: no_new_or_worsened
+  source_ref:
+    origin: engineer_approved
+  review_status: draft
+  approved_by: null
+  version: 1

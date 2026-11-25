@@ -1,0 +1,23 @@
+# 密钥与本地配置
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.pytest_cache/
+
+# 运行输出、快照、日志
+work/
+runs/
+*.log
+
+# 第三方检出（wisp6 / altium-mcp），用下载脚本或 submodule，不进主仓库
+third_party/
+
+# 调研时的第三方克隆与浏览器缓存
+_research/
+.playwright-mcp/
